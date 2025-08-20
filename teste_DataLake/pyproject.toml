@@ -5,7 +5,9 @@ description = "Projeto de teste para pipeline Jenkins com uv"
 authors = [{ name = "Seu Nome", email = "seu@email.com" }]
 requires-python = ">=3.8"
 dependencies = []
-py-modules = ["main"]  # 👈 isso resolve seu erro
+
+[tool.setuptools]
+py-modules = ["main"]
 
 [tool.pytest.ini_options]
 python_files = ["test_*.py"]
