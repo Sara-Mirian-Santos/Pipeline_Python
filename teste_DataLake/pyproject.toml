@@ -1,0 +1,19 @@
+[project]
+name = "teste-datalake"
+version = "0.1.0"
+description = "Projeto de teste para pipeline Jenkins com uv"
+authors = [{ name = "Seu Nome", email = "seu@email.com" }]
+requires-python = ">=3.8"
+
+[project.dependencies]
+# Nenhuma dependência obrigatória neste exemplo simples
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py"]
+
+[tool.ruff]
+line-length = 88
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

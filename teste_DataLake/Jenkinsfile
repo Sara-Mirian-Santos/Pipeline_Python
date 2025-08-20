@@ -1,0 +1,101 @@
+pipeline {
+    agent any
+
+    environment {
+        VENV_DIR = 'venv'
+        pipe_DataLake = 'teste_DataLake'
+    }
+
+    stages {
+        stage('Criar venv') {
+            steps {
+                script {
+                    try {
+                        dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
+                            sh '''
+                                python3 -m venv $VENV_DIR
+                                ./venv/bin/pip install --upgrade pip
+                            '''
+                        }
+                    } catch (err) {
+                        error "Erro ao criar o venv: ${err}"
+                    }
+                }
+            }
+        }
+
+        stage('Instalar uv no venv') {
+            steps {
+                script {
+                    try {
+                        dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
+                            sh '''
+                                ./venv/bin/pip install uv
+                                ./venv/bin/uv --version
+                            '''
+                        }
+                    } catch (err) {
+                        error "Erro ao instalar uv: ${err}"
+                    }
+                }
+            }
+        }
+
+        stage('Instalar dependências do projeto') {
+            steps {
+                script {
+                    try {
+                        dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
+                            sh '''
+                                ./venv/bin/uv sync
+                                ./venv/bin/uv pip install .
+                            '''
+                        }
+                    } catch (err) {
+                        error "Erro ao instalar dependências: ${err}"
+                    }
+                }
+            }
+        }
+
+        stage('Ruff (lint e format)') {
+            steps {
+                script {
+                    try {
+                        dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
+                            sh '''
+                                ./venv/bin/uv run ruff check
+                                ./venv/bin/uv run ruff format --check
+                            '''
+                        }
+                    } catch (err) {
+                        error "Erro no lint/format com ruff: ${err}"
+                    }
+                }
+            }
+        }
+
+        stage('Rodar testes') {
+            steps {
+                script {
+                    try {
+                        dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
+                            sh './venv/bin/uv run pytest'
+                        }
+                    } catch (err) {
+                        error "Erro ao rodar testes: ${err}"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline finalizado.'
+        }
+        failure {
+            echo 'Pipeline falhou!'
+        }
+    }
+}
