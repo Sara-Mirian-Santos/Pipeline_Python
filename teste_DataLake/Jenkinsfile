@@ -40,6 +40,7 @@ pipeline {
                     try {
                         dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
                             sh '''
+                                ls -l
                                 python3 -m venv $VENV_DIR
                                 ./venv/bin/pip install --upgrade pip
                             '''
@@ -126,4 +127,5 @@ pipeline {
         }
     }
 }
+
 
