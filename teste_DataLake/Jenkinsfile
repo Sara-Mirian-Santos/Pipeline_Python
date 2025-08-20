@@ -7,7 +7,7 @@ pipeline {
         repository = 'https://github.com/Sara-Mirian-Santos/Pipeline_Python.git'
         appRepoBranch = 'main'
         gitHubCredentialsId = 'credencial_adm'
-        urlWebhook = 'https://webhookb2'
+        // urlWebhook = 'https://webhookb2'
     }
 
     stages {
@@ -95,19 +95,20 @@ pipeline {
         }
         failure {
             script {
-                office365ConnectorSend message: "Teste falhou ❌", webhookUrl: env.urlWebhook   
+                // office365ConnectorSend message: "Teste falhou ❌", webhookUrl: env.urlWebhook   
                 echo "Erro na execução da esteira de teste."
             }
         }
         success {
             script {                
-                office365ConnectorSend message: "Teste finalizado com sucesso ✅", webhookUrl: env.urlWebhook
+                // office365ConnectorSend message: "Teste finalizado com sucesso ✅", webhookUrl: env.urlWebhook
                 echo "Esteira de teste executada com sucesso!"      
             }
         }
         aborted {
-            office365ConnectorSend message: "Teste abortado ⚠️", webhookUrl: env.urlWebhook
+            // office365ConnectorSend message: "Teste abortado ⚠️", webhookUrl: env.urlWebhook
             updateGitlabCommitStatus name: 'CommitAndPushReportToGit', state: 'canceled'
         }
     }
 }
+
