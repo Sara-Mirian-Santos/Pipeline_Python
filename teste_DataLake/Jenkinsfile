@@ -4,6 +4,35 @@ pipeline {
     environment {
         VENV_DIR = 'venv'
         pipe_DataLake = 'teste_DataLake'
+
+        appRepository = 'https://github.com/Sara-Mirian-Santos/Pipeline_Python/teste_DataLake'
+        appRepoBranch = 'master'
+        gitHubCredentialsId = 'credencial_adm'
+    }
+
+    stage('CheckoutAppRepo') {
+        steps {
+            script {
+                try {
+                    echo "Checkout da branch ${env.appRepoBranch} localizada em ${env.appRepository}."
+                    sh "mkdir -p ${env.WORKSPACE}/${env.pipe_DataLake}"
+                    dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
+                        checkout([
+                            $class: 'GitSCM',
+                            userRemoteConfigs: [[
+                                url: "${env.appRepository}",
+                                credentialsId: "${env.gitHubCredentialsId}"
+                            ]],
+                            branches: [[name: "${env.appRepoBranch}"]]
+                        ])
+                    }
+                } catch (err) {
+                    def msg = "Erro ao fazer checkout do repositório da aplicação."
+                    echo msg
+                    error "${msg} Verifique os logs em ${env.BUILD_URL}console."
+                }
+            }
+        }
     }
 
     stages {
