@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         VENV_DIR = 'venv'
-        pipe_DataLake = 'Pipeline_Python/teste_DataLake'
+        pipe_DataLake = 'teste_DataLake'
         repository = 'https://github.com/Sara-Mirian-Santos/Pipeline_Python.git'
         appRepoBranch = 'main'
         gitHubCredentialsId = 'credencial_adm'
@@ -126,3 +126,4 @@ pipeline {
         }
     }
 }
+
