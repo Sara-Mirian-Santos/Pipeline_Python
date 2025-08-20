@@ -3,10 +3,9 @@ pipeline {
 
     environment {
         VENV_DIR = 'venv'
-        pipe_DataLake = 'teste_DataLake'
-
-        appRepository = 'https://github.com/Sara-Mirian-Santos/Pipeline_Python/teste_DataLake'
-        appRepoBranch = 'master'
+        pipe_DataLake = 'Pipeline_Python/teste_DataLake'
+        repository = 'https://github.com/Sara-Mirian-Santos/Pipeline_Python.git'
+        appRepoBranch = 'main'
         gitHubCredentialsId = 'credencial_adm'
     }
 
@@ -15,13 +14,13 @@ pipeline {
             steps {
                 script {
                     try {
-                        echo "Checkout da branch ${env.appRepoBranch} localizada em ${env.appRepository}."
+                        echo "Checkout da branch ${env.appRepoBranch} localizada em ${env.repository}."
                         sh "mkdir -p ${env.WORKSPACE}/${env.pipe_DataLake}"
                         dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
                             checkout([
                                 $class: 'GitSCM',
                                 userRemoteConfigs: [[
-                                    url: "${env.appRepository}",
+                                    url: "${env.repository}",
                                     credentialsId: "${env.gitHubCredentialsId}"
                                 ]],
                                 branches: [[name: "${env.appRepoBranch}"]]
