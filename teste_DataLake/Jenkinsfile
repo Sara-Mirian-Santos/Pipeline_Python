@@ -8,6 +8,8 @@ pipeline {
         appRepoBranch = 'main'
         gitHubCredentialsId = 'credencial_adm'
         // urlWebhook = 'https://webhookb2'
+        folderBucket = 'bucket'
+        artifact = 'artefato'
     }
 
     stages {
@@ -87,6 +89,20 @@ pipeline {
                 }
             }
         }
+
+        stage('Empacotar artefato (.zip)') {
+            steps {
+                script {
+                    dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
+                        sh '''
+                            mkdir -p ${env.folderBucket}
+                            zip -r ${env.folderBucket}/${env.artifact}.zip . -i '*.py'
+                            echo "Arquivo gerado em: ${env.folderBucket}/${env.artifact}.zip"
+                        '''
+                    }
+                }
+            }
+        }
     }
 
     post {
@@ -111,4 +127,3 @@ pipeline {
         }
     }
 }
-
