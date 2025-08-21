@@ -94,11 +94,11 @@ pipeline {
             steps {
                 script {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
-                        sh '''
+                        sh """
                             mkdir -p ${env.folderBucket}
                             zip -r ${env.folderBucket}/${env.artifact}.zip . -i '*.py'
                             echo "Arquivo gerado em: ${env.folderBucket}/${env.artifact}.zip"
-                        '''
+                        """
                     }
                 }
             }
