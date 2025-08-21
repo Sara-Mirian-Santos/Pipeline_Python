@@ -103,22 +103,23 @@ pipeline {
                 }
             }
         }
-    }
 
-    stage('Upload artefato para MinIO') {
-        steps {
-            withCredentials([usernamePassword(credentialsId: 'minio-creds', usernameVariable: 'MINIO_USER', passwordVariable: 'MINIO_PASS')]) {
-                script {
-                    dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
-                        sh """
-                            mc alias set local http://localhost:9000 $MINIO_USER $MINIO_PASS
-                            mc cp ${env.folderBucket}/${env.artifact}.zip local/dags-dev/
-                            echo "Artefato enviado para MinIO: dags-dev/${env.artifact}.zip"
-                        """
+        stage('Upload artefato para MinIO') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'minio-creds', usernameVariable: 'MINIO_USER', passwordVariable: 'MINIO_PASS')]) {
+                    script {
+                        dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
+                            sh """
+                                mc alias set local http://localhost:9000 $MINIO_USER $MINIO_PASS
+                                mc cp ${env.folderBucket}/${env.artifact}.zip local/dags-dev/
+                                echo "Artefato enviado para MinIO: dags-dev/${env.artifact}.zip"
+                            """
+                        }
                     }
                 }
             }
         }
+
     }
 
     post {
@@ -143,3 +144,4 @@ pipeline {
         }
     }
 }
+
