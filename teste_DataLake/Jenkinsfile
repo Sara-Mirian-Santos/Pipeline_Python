@@ -96,7 +96,7 @@ pipeline {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
                         sh """
                             mkdir -p ${env.folderBucket}
-                            zip -r ${env.folderBucket}/${env.artifact}.zip . -i '*.py'
+                            python3 -m zipfile -c ${env.folderBucket}/${env.artifact}.zip \$(find . -name "*.py")
                             echo "Arquivo gerado em: ${env.folderBucket}/${env.artifact}.zip"
                         """
                     }
