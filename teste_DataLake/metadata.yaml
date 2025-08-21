@@ -1,6 +1,0 @@
-artifact: pipeline-python
-description: uma pipeline python que efetua a publicação num bucket local
-version: 0.1.0 # esse valor deve ser atualizado somente após o release em ambiente de produção
-extensions:
-  - zip 
-nonProductiveConfigurationRepository: https://github.com/Sara-Mirian-Santos/Pipeline_Python.git
