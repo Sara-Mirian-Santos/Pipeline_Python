@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         VENV_DIR = 'venv'
-        metadataFile = 'metadata.yaml'
         pipe_DataLake = 'teste_DataLake'   // variável da pasta
         repository = 'https://github.com/Sara-Mirian-Santos/Pipeline_Python.git'
         appRepoBranch = 'main'
@@ -11,6 +10,7 @@ pipeline {
         // urlWebhook = 'https://webhookb2'
         folderBucket = 'bucket'
         artifact = 'artefato'
+        extension = 'zip'
     }
 
     stages {
@@ -26,47 +26,6 @@ pipeline {
                         branches: [[name: "${env.appRepoBranch}"]]
                     ])
                 }
-            }
-        }
-
-        stage('MetadataValidation') {
-            steps {
-                script {
-                    try {            
-                        dir("${env.WORKSPACE}/${env.pipe_DataLake}") {     
-                            // Verifica se o arquivo metadata.yaml existe
-                            if (!fileExists(env.metadataFile)) {                  
-                                def comment = "Arquivo `${env.metadataFile}` não encontrado. Adicione-o para continuar."
-                                addGitLabMRComment(comment: comment)
-                                error(comment)             
-                            } else {
-                                echo "Arquivo `${env.metadataFile}` encontrado. Verificando o conteúdo."            
-                                // Carrega o conteúdo do metadata.yaml
-                                def metadata = readYaml file: env.metadataFile            
-                                // Verifica se todos os campos obrigatórios estão presentes
-                                if (!metadata.artifact || !metadata.description || !metadata.version || !metadata.extensions || !metadata.nonProductiveConfigurationRepository) {                  
-                                    def comment = "O arquivo `${env.metadataFile}` está incompleto. Os campos 'artifact', 'description', 'version', 'extensions' e 'nonProductiveConfigurationRepository' são obrigatórios."
-                                    addGitLabMRComment(comment: comment)
-                                    error(comment)              
-                                } else {
-                                    // Atualiza as variáveis de ambiente
-                                    env.artifact = metadata.artifact
-                                    env.description = metadata.description
-                                    env.version = metadata.version
-                                    env.extensions = metadata.extensions.join(',')
-                                    env.nonProductiveConfigurationRepository = metadata.nonProductiveConfigurationRepository                  
-                                    def comment = "Arquivo `${env.metadataFile}` validado:\n- artifact: ${env.artifact}\n- description: ${env.description}\n- version: ${env.version}\n- extensions: ${env.extensions}\n- nonProductiveConfigurationRepository: ${env.nonProductiveConfigurationRepository}."
-                                    addGitLabMRComment(comment: comment)
-                                    echo comment
-                                }
-                            }
-                        }
-                    } catch (Exception e) {            
-                        def comment = "Erro ao verificar o arquivo `${env.metadataFile}`."
-                        addGitLabMRComment(comment: "${comment} Verificar logs em ${BUILD_URL}console.")
-                        error(comment)
-                    }
-                }            
             }
         }
 
@@ -127,17 +86,14 @@ pipeline {
                 }
             }
         }
-        stage('Empacotar artefato') {
+        stage('Empacotar artefato (.zip)') {
             steps {
                 script {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
-                        def extension = env.extensions.split(',')[0].trim()  //Usa a primeira extensão
-                        def outputFile = "${env.artifact}_${env.version}.${extension}"
-                        env.outputArtifact = outputFile
                         sh """
                             mkdir -p ${env.folderBucket}
-                            python3 -m zipfile -c ${env.folderBucket}/${outputFile} \$(find . -name "*.py")
-                            echo "Arquivo gerado em: ${env.folderBucket}/${outputFile}"
+                            python3 -m zipfile -c ${env.folderBucket}/${env.artifact}.${env.extension} \$(find . -name "*.py")
+                            echo "Arquivo gerado em: ${env.folderBucket}/${env.artifact}.${env.extension}"
                         """
                     }
                 }
@@ -150,8 +106,8 @@ pipeline {
                         dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
                             sh """
                                 mc alias set local http://localhost:9000 $MINIO_USER $MINIO_PASS
-                                mc cp ${env.folderBucket}/${env.outputArtifact} local/dags-dev/
-                                echo "Artefato enviado para MinIO: dags-dev/${env.outputArtifact}"
+                                mc cp ${env.folderBucket}/${env.artifact}.${env.extension} local/dags-dev/
+                                echo "Artefato enviado para MinIO: dags-dev/${env.artifact}.${env.extension}"
                             """
                         }
                     }
