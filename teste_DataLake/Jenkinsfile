@@ -29,13 +29,14 @@ pipeline {
             }
         }
 
-        stage('Instalar uv e dependências (sem venv)') {
+        stage('Instalar uv e dependências') {
             steps {
                 script {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
                         sh '''
                             pip install --upgrade pip
                             pip install uv
+                            export PATH="$HOME/.local/bin:$PATH"
                             uv sync
                             uv pip install .
                         '''
@@ -116,5 +117,6 @@ pipeline {
         }
     }
 }
+
 
 
