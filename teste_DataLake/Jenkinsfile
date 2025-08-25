@@ -11,6 +11,7 @@ pipeline {
         folderBucket = 'bucket'
         artifact = 'artefato'
         extension = 'zip'
+        PATH = "$HOME/.local/bin:$PATH"
     }
 
     stages {
@@ -36,7 +37,6 @@ pipeline {
                         sh '''
                             pip install --upgrade pip
                             pip install uv
-                            export PATH="$HOME/.local/bin:$PATH"
                             uv sync
                             uv pip install .
                         '''
@@ -117,6 +117,7 @@ pipeline {
         }
     }
 }
+
 
 
 
