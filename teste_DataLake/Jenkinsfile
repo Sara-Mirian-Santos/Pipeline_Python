@@ -2,12 +2,10 @@ pipeline {
     agent any
 
     environment {
-        VENV_DIR = 'venv'
         pipe_DataLake = 'teste_DataLake'   // variável da pasta
         repository = 'https://github.com/Sara-Mirian-Santos/Pipeline_Python.git'
         appRepoBranch = 'main'
         gitHubCredentialsId = 'credencial_adm'
-        // urlWebhook = 'https://webhookb2'
         folderBucket = 'bucket'
         artifact = 'artefato'
         extension = 'zip'
@@ -35,8 +33,8 @@ pipeline {
                 script {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
                         sh '''
-                            pip install --upgrade pip
-                            pip install uv
+                            pip install --upgrade pip --user
+                            pip install uv --user
                             uv sync
                             uv pip install .
                         '''
@@ -50,22 +48,24 @@ pipeline {
                 script {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
                         sh '''
-                            ./venv/bin/uv run ruff check
-                            ./venv/bin/uv run ruff format --check
+                            uv run ruff check
+                            uv run ruff format --check
                         '''
                     }
                 }
             }
         }
+
         stage('Rodar testes') {
             steps {
                 script {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
-                        sh './venv/bin/uv run pytest'
+                        sh 'uv run pytest'
                     }
                 }
             }
         }
+
         stage('Empacotar artefato (.zip)') {
             steps {
                 script {
@@ -79,6 +79,7 @@ pipeline {
                 }
             }
         }
+
         stage('Upload artefato para MinIO') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'minio-creds', usernameVariable: 'MINIO_USER', passwordVariable: 'MINIO_PASS')]) {
@@ -95,29 +96,23 @@ pipeline {
             }
         }
     }
+
     post {
         always {
             cleanWs() // Limpa o workspace após a execução
         }
         failure {
             script {
-                // office365ConnectorSend message: "Teste falhou ❌", webhookUrl: env.urlWebhook   
                 echo "Erro na execução da esteira de teste."
             }
         }
         success {
-            script {                
-                // office365ConnectorSend message: "Teste finalizado com sucesso ✅", webhookUrl: env.urlWebhook
-                echo "Esteira de teste executada com sucesso!"      
+            script {
+                echo "Esteira de teste executada com sucesso!"
             }
         }
         aborted {
-            // office365ConnectorSend message: "Teste abortado ⚠️", webhookUrl: env.urlWebhook
             updateGitlabCommitStatus name: 'CommitAndPushReportToGit', state: 'canceled'
         }
     }
 }
-
-
-
-
