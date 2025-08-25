@@ -36,7 +36,6 @@ pipeline {
                         sh '''
                             pip install --upgrade pip
                             pip install uv
-                            uv --version
                             uv sync
                             uv pip install .
                         '''
@@ -117,4 +116,5 @@ pipeline {
         }
     }
 }
+
 
