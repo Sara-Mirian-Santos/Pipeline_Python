@@ -2,14 +2,15 @@ pipeline {
     agent any
 
     environment {
+        VENV_DIR = 'venv'
         pipe_DataLake = 'teste_DataLake'   // variável da pasta
         repository = 'https://github.com/Sara-Mirian-Santos/Pipeline_Python.git'
         appRepoBranch = 'main'
         gitHubCredentialsId = 'credencial_adm'
+        // urlWebhook = 'https://webhookb2'
         folderBucket = 'bucket'
         artifact = 'artefato'
         extension = 'zip'
-        PATH = "$HOME/.local/bin:$PATH"
     }
 
     stages {
@@ -28,53 +29,72 @@ pipeline {
             }
         }
 
-        stage('Instalar uv e dependências') {
+        stage('Criar venv') {
             steps {
                 script {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
                         sh '''
-                            pip install --upgrade pip --user
-                            pip install uv --user
-                            uv sync
-                            uv pip install .
+                            python3 -m venv $VENV_DIR
+                            ./venv/bin/pip install --upgrade pip
                         '''
                     }
                 }
             }
         }
-
+        stage('Instalar uv no venv') {
+            steps {
+                script {
+                    dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
+                        sh '''
+                            ./venv/bin/pip install uv
+                            ./venv/bin/uv --version
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Instalar dependências do projeto') {
+            steps {
+                script {
+                    dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
+                        sh '''
+                            ./venv/bin/uv sync
+                            ./venv/bin/uv pip install .
+                        '''
+                    }
+                }
+            }
+        }
         stage('Ruff (lint e format)') {
             steps {
                 script {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
                         sh '''
-                            uv run ruff check
-                            uv run ruff format --check
+                            ./venv/bin/uv run ruff check
+                            ./venv/bin/uv run ruff format --check
                         '''
                     }
                 }
             }
         }
-
         stage('Rodar testes') {
             steps {
                 script {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
-                        sh 'uv run pytest'
+                        sh './venv/bin/uv run pytest'
                     }
                 }
             }
         }
 
-        stage('Empacotar artefato (.zip)') {
+        stage('Build do Projeto') {
             steps {
                 script {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
-                        sh """
-                            mkdir -p ${env.folderBucket}
-                            python3 -m zipfile -c ${env.folderBucket}/${env.artifact}.${env.extension} \$(find . -name "*.py")
-                            echo "Arquivo gerado em: ${env.folderBucket}/${env.artifact}.${env.extension}"
-                        """
+                        sh '''
+                            ./venv/bin/uv pip install build
+                            ./venv/bin/python -m build
+                        '''
                     }
                 }
             }
@@ -87,8 +107,8 @@ pipeline {
                         dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
                             sh """
                                 mc alias set local http://localhost:9000 $MINIO_USER $MINIO_PASS
-                                mc cp ${env.folderBucket}/${env.artifact}.${env.extension} local/dags-dev/
-                                echo "Artefato enviado para MinIO: dags-dev/${env.artifact}.${env.extension}"
+                                mc cp dist/*.tar.gz local/dags-dev/
+                                echo "Artefato .tar.gz enviado para MinIO: dags-dev/"
                             """
                         }
                     }
@@ -96,22 +116,24 @@ pipeline {
             }
         }
     }
-
     post {
         always {
             cleanWs() // Limpa o workspace após a execução
         }
         failure {
             script {
+                // office365ConnectorSend message: "Teste falhou ❌", webhookUrl: env.urlWebhook   
                 echo "Erro na execução da esteira de teste."
             }
         }
         success {
-            script {
-                echo "Esteira de teste executada com sucesso!"
+            script {                
+                // office365ConnectorSend message: "Teste finalizado com sucesso ✅", webhookUrl: env.urlWebhook
+                echo "Esteira de teste executada com sucesso!"      
             }
         }
         aborted {
+            // office365ConnectorSend message: "Teste abortado ⚠️", webhookUrl: env.urlWebhook
             updateGitlabCommitStatus name: 'CommitAndPushReportToGit', state: 'canceled'
         }
     }
