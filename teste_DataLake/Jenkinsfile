@@ -93,7 +93,7 @@ pipeline {
                     dir("${env.WORKSPACE}/${env.pipe_DataLake}") {
                         sh '''
                             ./venv/bin/uv pip install build
-                            ./venv/bin/python -m build
+                            ./venv/bin/uv run python -m build
                         '''
                     }
                 }
@@ -138,3 +138,5 @@ pipeline {
         }
     }
 }
+
+
